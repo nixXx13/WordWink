@@ -1,4 +1,3 @@
-import { VALID_WORDS } from '../data/words.js';
 
 /**
  * Check if a word can be formed from the given letters

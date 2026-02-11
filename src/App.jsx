@@ -4,8 +4,8 @@ import LetterDisplay from './components/LetterDisplay';
 import FoundWords from './components/FoundWords';
 import WordCount from './components/WordCount';
 import './App.css';
-
-const API_URL = 'http://localhost:3005/api';
+import { api } from '../convex/_generated/api.js';
+import { useQuery, useMutation } from 'convex/react';
 
 function App() {
   const [playerId, setPlayerId] = useState(null);
@@ -17,6 +17,33 @@ function App() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
+  const gameDetails = useQuery(api.WordWinkClient.getGame, { date: '2026-02-08' });
+  const foundWordsData = useQuery(
+    api.WordWinkClient.getFoundWords,
+    gameDetails && playerId
+      ? { playerId: playerId, gameId: gameDetails._id }
+      : 'skip',
+  );
+
+  // Mutation for submitting words
+  const submitWordMutation = useMutation(api.WordWinkClient.submitWord);
+
+  useEffect(() => {
+    if (gameDetails != null){
+      setLoading(false);
+      console.log( gameDetails);
+      setPuzzle(gameDetails);
+    }
+  }, [gameDetails]);
+
+  useEffect(() => {
+    if (foundWordsData != null && foundWordsData.size !== 0) {
+      console.log(foundWordsData.map(x=>x.word));
+      setFoundWords(foundWordsData.map((x) => x.word));
+    }
+  }, [foundWordsData]);
+
+
   // Load or generate player ID
   useEffect(() => {
     let storedPlayerId = localStorage.getItem('wordwink-player-id');
@@ -26,37 +53,6 @@ function App() {
     }
     setPlayerId(storedPlayerId);
   }, []);
-
-  // Fetch daily puzzle
-  useEffect(() => {
-    if (!playerId) return;
-
-    const fetchPuzzle = async () => {
-      try {
-        setLoading(true);
-        const response = await fetch(`${API_URL}/puzzle/daily`, {
-          headers: {
-            'X-Player-ID': playerId,
-          },
-        });
-
-        if (!response.ok) {
-          throw new Error('Failed to fetch puzzle');
-        }
-
-        const data = await response.json();
-        setPuzzle(data);
-        setFoundWords(data.progress.foundWords || []);
-        setLoading(false);
-      } catch (err) {
-        console.error('Error fetching puzzle:', err);
-        setError('Failed to load puzzle. Please refresh the page.');
-        setLoading(false);
-      }
-    };
-
-    fetchPuzzle();
-  }, [playerId]);
 
   const handleLetterClick = (letter, index) => {
     if (selectedLetters.includes(index)) {
@@ -118,23 +114,21 @@ function App() {
       return;
     }
 
+    if (!gameDetails || !playerId) {
+      setMessage('❌ Game not loaded yet!');
+      return;
+    }
+
     try {
-      const response = await fetch(`${API_URL}/word/submit`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          playerId,
-          puzzleId: puzzle.puzzleId,
-          word: currentWord,
-        }),
+      // Call Convex mutation
+      const data = await submitWordMutation({
+        word: currentWord,
+        playerId: playerId,
+        gameId: gameDetails._id,
       });
 
-      const data = await response.json();
-
       if (data.valid) {
-        setFoundWords(data.progress.foundWords);
+        setFoundWords(data.foundWords);
         setMessage(`✨ "${currentWord.toUpperCase()}" accepted!`);
         triggerConfetti();
         handleClear();
@@ -160,6 +154,9 @@ function App() {
     } catch (err) {
       console.error('Error submitting word:', err);
       setMessage('❌ Failed to submit word. Please try again.');
+      setTimeout(() => {
+        handleClear();
+      }, 1500);
     }
   };
 
