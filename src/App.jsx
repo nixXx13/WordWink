@@ -17,7 +17,7 @@ function App() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
-  const gameDetails = useQuery(api.WordWinkClient.getGame, { date: '2026-02-08' });
+  const gameDetails = useQuery(api.WordWinkClient.getGame, { date: '2026-02-08' }); // TODO - get current date
   const foundWordsData = useQuery(
     api.WordWinkClient.getFoundWords,
     gameDetails && playerId
