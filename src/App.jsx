@@ -129,6 +129,10 @@ function App() {
 
       if (data.valid) {
         setFoundWords(data.foundWords);
+        setTimeout(() => {
+          const strip = document.querySelector('.found-words-strip-wrapper .words-grid');
+          if (strip) strip.scrollLeft = strip.scrollWidth;
+        }, 50);
         setMessage(`✨ "${currentWord.toUpperCase()}" accepted!`);
         triggerConfetti();
         handleClear();
@@ -178,12 +182,31 @@ function App() {
 
   return (
     <div className="app">
+      {/* Mobile header — hidden on desktop */}
+      <div className="mobile-header">
+        <h1 className="title">WordWink</h1>
+        {foundWords.length > 0 && (
+          <span className="mobile-word-badge">
+            {foundWords.length} word{foundWords.length !== 1 ? 's' : ''} ▾
+          </span>
+        )}
+      </div>
+
+      {/* Desktop header — hidden on mobile */}
       <header className="header">
         <h1 className="title">WordWink</h1>
         <p className="subtitle">Find as many words as you can!</p>
       </header>
 
+      {/* Found words strip — mobile only, outside game-container to avoid layout shift */}
+      {foundWords.length > 0 && (
+        <div className="found-words-strip-wrapper">
+          <FoundWords words={foundWords} />
+        </div>
+      )}
+
       <main className="game-container">
+        {/* Desktop panels — hidden on mobile */}
         <div className={`panels ${foundWords.length === 0 ? 'empty' : ''}`}>
           <WordCount count={foundWords.length} />
           {foundWords.length > 0 && <FoundWords words={foundWords} />}
@@ -199,9 +222,16 @@ function App() {
               {puzzle.letters[letterIndex]}
             </span>
           ))}
+          {/* Inline message — overlaid on current-word-display on mobile */}
+          {message && (
+            <div className={`message message--inline ${message.includes('✨') ? 'success' : 'error'}`}>
+              {message}
+            </div>
+          )}
         </div>
 
-        <div className={`message ${message ? (message.includes('✨') ? 'success' : 'error') : 'hidden'}`}>
+        {/* Standalone message — desktop only */}
+        <div className={`message message--standalone ${message ? (message.includes('✨') ? 'success' : 'error') : 'hidden'}`}>
           {message || '\u00A0'}
         </div>
 
@@ -218,6 +248,7 @@ function App() {
               onClick={handleClear}
               disabled={!currentWord}
             >
+              <span className="btn-icon">×</span>
               Clear
             </button>
             <button
@@ -225,6 +256,7 @@ function App() {
               onClick={handleSubmit}
               disabled={!currentWord}
             >
+              <span className="btn-icon">✓</span>
               Submit
             </button>
           </div>

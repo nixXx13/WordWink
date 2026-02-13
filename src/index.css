@@ -8,6 +8,7 @@ body {
   font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  -webkit-tap-highlight-color: transparent;
   background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
   min-height: 100vh;
   display: flex;
@@ -22,4 +23,26 @@ body {
   justify-content: center;
   align-items: center;
   padding: 20px;
+}
+
+@media (max-width: 768px) {
+  html, body {
+    height: 100%;
+    overflow: hidden;
+    position: fixed;   /* iOS Safari scroll-lock technique */
+    width: 100%;
+  }
+
+  body {
+    align-items: stretch;
+  }
+
+  #root {
+    height: 100dvh;    /* dvh = dynamic vh, accounts for browser chrome bar */
+    min-height: unset;
+    max-height: 100dvh;
+    align-items: stretch;
+    padding: 0;
+    overflow: hidden;
+  }
 }
